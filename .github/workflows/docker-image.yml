@@ -36,6 +36,8 @@ jobs:
         context: . # 使用当前目录作为上下文
         file: Dockerfile # Dockerfile的位置
         push: true # 推送镜像到Docker Hub
-        tags: datamini/qdrant-br:${{ env.VERSION }}
+        tags:
+          datamini/qdrant-br:${{ env.VERSION }}
+          datamini/qdrant-br:latest
         platforms: linux/amd64,linux/arm64
 
