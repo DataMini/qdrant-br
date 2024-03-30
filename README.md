@@ -31,7 +31,7 @@
     ```bash
     docker build -t qdrant-br .
     ```
-   
+
     或者从Docker Hub拉取：
     
     ```bash

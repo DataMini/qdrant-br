@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 import boto3
 import oss2
 from qdrant_client import QdrantClient
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 from tabulate import tabulate
 
 
@@ -58,12 +58,13 @@ def convert_size(size_bytes):
 
 
 def download_snapshot(snapshot_url, local_path):
+    logger.info(f"Downloading {snapshot_url}")
     headers = {'api-key': QDRANT_KEY} if QDRANT_KEY else {}
     response = requests.get(snapshot_url, headers=headers)
     response.raise_for_status()  # 确保请求成功
     with open(local_path, 'wb') as f:
         f.write(response.content)
-    logger.info(f"Downloaded {snapshot_url}")
+    logger.info(f"Downloaded successfully!")
 
 
 def restore_collection_from_file(snapshot_file_path, collection_name):
@@ -113,8 +114,8 @@ def get_port_from_url(url):
 # 使用上面定义的函数来获取存储客户端
 try:
     storage_client = get_storage_client(STORAGE_SERVICE, STORAGE_REGION)
-except Exception:
-    print("Failed to initialize storage client. Please check your credentials.")
+except Exception as e:
+    print(f"Failed to initialize storage client. Please check your credentials. Region: {STORAGE_REGION}, {e} ")
     sys.exit(1)
 
 # 创建Qdrant客户端
@@ -131,8 +132,7 @@ def backup_collections():
     collections = client.http.collections_api.get_collections().result.collections
 
     for collection in collections:
-        print(f"Backing up collection: {collection.name} ...")
-        logger.info(f"Backing up collection: {collection.name}")
+        log_or_print(f"Backing up collection: {collection.name} ...")
         collection_name = collection.name
         snapshot_info = client.http.snapshots_api.create_snapshot(collection_name=collection_name)
         snapshot_name = f"{snapshot_info.result.name}"
@@ -148,6 +148,7 @@ def backup_collections():
             logger.error(f"Failed to download {snapshot_url} {e}")
             continue
 
+        logger.info(f"Uploading {snapshot_name} to {STORAGE_SERVICE} in path {storage_key_name}.")
         # 上传快照
         if STORAGE_SERVICE == "OSS":
             with open(local_path, "rb") as snapshot_file:
@@ -155,11 +156,11 @@ def backup_collections():
         else:
             with open(local_path, "rb") as snapshot_file:
                 storage_client.upload_fileobj(snapshot_file, BUCKET_NAME, storage_key_name)
+        logger.info(f"Uploaded successfully!")
 
         # 删除临时文件
         try:
             os.remove(local_path)
-            logger.info(f"Temporary snapshot file {local_path} deleted.")
         except OSError as e:
             logger.error(f"Error deleting temporary snapshot file {local_path}: {e}")
         log_or_print(f"Collection {collection_name} backed up to {STORAGE_SERVICE} in path {storage_key_name}.")
@@ -231,6 +232,8 @@ def list_backups(days=3):
 
 
 def check_credentials():
+    logger.info(f"Using {STORAGE_SERVICE} in region {STORAGE_REGION} with bucket {BUCKET_NAME}")
+    logger.info(f"Using Qdrant at {QDRANT_URL}")
     try:
         if STORAGE_SERVICE == "OSS":
             auth = oss2.Auth(ACCESS_KEY, SECRET_KEY)

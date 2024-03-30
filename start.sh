@@ -12,7 +12,10 @@ fi
 
 # 添加Cron任务
 touch /var/log/cron.log
-echo "$BACKUP_CRON_SCHEDULE root qdrant-br backup >> /var/log/cron.log 2>&1" >> /etc/crontab
+
+# 将环境变量写入文件，方便Cron任务读取
+env > /usr/local/bin/.env
+echo "$BACKUP_CRON_SCHEDULE root qdrant-br -v backup >> /var/log/cron.log 2>&1" >> /etc/crontab
 
 # 启动Cron服务
 cron
