@@ -37,7 +37,6 @@ jobs:
         file: Dockerfile # Dockerfile的位置
         push: true # 推送镜像到Docker Hub
         tags:
-          datamini/qdrant-br:${{ env.VERSION }}
-          datamini/qdrant-br:latest
+          datamini/qdrant-br:${{ env.VERSION }},datamini/qdrant-br:latest
         platforms: linux/amd64,linux/arm64
 
