@@ -11,7 +11,8 @@ if [ $? -ne 0 ]; then
 fi
 
 # 添加Cron任务
-echo "$BACKUP_CRON_SCHEDULE root qdrant-br backup > /var/log/cron.log 2>&1" >> /etc/crontab
+touch /var/log/cron.log
+echo "$BACKUP_CRON_SCHEDULE root qdrant-br backup >> /var/log/cron.log 2>&1" >> /etc/crontab
 
 # 启动Cron服务
 cron
